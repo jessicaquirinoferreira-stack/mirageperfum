@@ -77,7 +77,7 @@ export default function App() {
         <LoadingScreen onComplete={() => setIsLoadingInitial(false)} />
       )}
 
-      <div className="min-h-screen flex flex-col bg-[#070708] text-[#F8F6F0] selection:bg-[#C9A86C]/30 selection:text-[#F8F6F0]">
+      <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#1A1A1E] selection:bg-[#B89753]/30 selection:text-[#1A1A1E]">
         
         {/* Global Navigation Header (hidden on admin page for full-screen console experience) */}
         {currentView !== 'admin' && (

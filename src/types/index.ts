@@ -23,6 +23,7 @@ export interface Product {
   isBestseller: boolean;
   stock: number;
   status: 'active' | 'draft' | 'archived';
+  ratingCount?: number;
   createdAt?: string;
   updatedAt?: string;
 }

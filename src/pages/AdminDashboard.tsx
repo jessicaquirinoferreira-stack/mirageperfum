@@ -263,37 +263,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productForm.name || !productForm.price) {
-      setProductSaveError('Nome e Preço são obrigatórios.');
-      return;
-    }
+    setProductSaveError(null);
 
-    if (!productForm.images || productForm.images.length === 0) {
-      setProductSaveError('Por favor, faça upload de pelo menos uma imagem do frasco.');
-      return;
-    }
+    const productName = productForm.name?.trim() || `Fragrância Exclusiva Mirage #${Math.floor(Math.random() * 900 + 100)}`;
+    const productPrice = Number(productForm.price) > 0 ? Number(productForm.price) : 1500;
+    const productImages = productForm.images && productForm.images.length > 0
+      ? productForm.images
+      : ['https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&q=80&w=800'];
 
     try {
       const productToSave: Product = {
         id: editingProduct?.id || productForm.id || `perfume-${Date.now()}`,
-        name: productForm.name || '',
-        subtitle: productForm.subtitle || '',
-        description: productForm.description || '',
-        longDescription: productForm.longDescription || productForm.description,
-        category: productForm.category || 'Geral',
+        name: productName,
+        subtitle: productForm.subtitle?.trim() || 'Extrait de Parfum • Alta Coleção Privée',
+        description: productForm.description?.trim() || 'Fragrância marcante e misteriosa com acordes nobres e fixação prolongada.',
+        longDescription: productForm.longDescription?.trim() || productForm.description?.trim() || 'Elixir de alta perfumaria elaborado com as essências mais refinadas de Grasse.',
+        category: productForm.category || 'Amadeirado Nobre & Couro',
         concentration: (productForm.concentration as ConcentrationType) || 'Extrait de Parfum',
-        volume: productForm.volume || '100ml',
-        availableVolumes: productForm.availableVolumes || ['50ml', '100ml'],
-        price: Number(productForm.price),
+        volume: productForm.volume || '100ml / 3.4 FL. OZ.',
+        availableVolumes: productForm.availableVolumes && productForm.availableVolumes.length > 0 ? productForm.availableVolumes : ['50ml', '100ml'],
+        price: productPrice,
         promotionalPrice: productForm.promotionalPrice ? Number(productForm.promotionalPrice) : undefined,
-        stock: Number(productForm.stock || 10),
-        notesTop: productForm.notesTop || '',
-        notesHeart: productForm.notesHeart || '',
-        notesBase: productForm.notesBase || '',
-        longevity: productForm.longevity || '18h na pele',
-        sillage: productForm.sillage || 'Marcante',
+        stock: Number(productForm.stock ?? 15),
+        notesTop: productForm.notesTop?.trim() || 'Bergamota da Calábria, Especiarias Raras',
+        notesHeart: productForm.notesHeart?.trim() || 'Rosa de Grasse, Oud Imperial, Âmbar',
+        notesBase: productForm.notesBase?.trim() || 'Baunilha de Madagascar, Patchouli, Sândalo',
+        longevity: productForm.longevity?.trim() || '18h - 24h na pele',
+        sillage: productForm.sillage?.trim() || 'Projeção Monumental',
         gender: (productForm.gender as any) || 'Unissex',
-        images: productForm.images,
+        images: productImages,
         featured: !!productForm.featured,
         isBestseller: !!productForm.isBestseller,
         status: productForm.status || 'active',

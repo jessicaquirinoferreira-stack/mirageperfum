@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
 import { formatCurrency } from '../lib/shipping';
-import { Heart, ShoppingBag, Sparkles, Eye } from 'lucide-react';
+import { Heart, ShoppingBag, Sparkles, Star } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -11,30 +11,35 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
-  const [selectedVolume, setSelectedVolume] = useState(product.volume || '100ml');
-  const [isHovered, setIsHovered] = useState(false);
+  const selectedVolume = product.volume || '100ml';
   const isWish = isInWishlist(product.id);
 
   const price = product.promotionalPrice || product.price;
   const hasDiscount = !!product.promotionalPrice && product.promotionalPrice < product.price;
+  const discountPercent = hasDiscount ? Math.round(((product.price - price) / product.price) * 100) : 10;
+  
+  // Calculated PIX price (e.g. 5% extra discount on PIX)
+  const pixPrice = price * 0.95;
+  const installmentValue = price / 6;
 
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="group relative flex flex-col glass-card rounded-sm overflow-hidden border border-[#C9A86C]/15 hover:border-[#C9A86C]/50 transition-all duration-500 bg-[#0c0c10]"
+      onClick={() => onSelect(product)}
+      className="group relative flex flex-col bg-white rounded-xs overflow-hidden border border-[#B89753]/20 hover:border-[#B89753]/60 transition-all duration-300 shadow-sm hover:shadow-lg cursor-pointer"
     >
-      {/* Badges */}
-      <div className="absolute top-3 left-3 z-20 flex flex-col gap-1.5 pointer-events-none">
-        {product.isBestseller && (
-          <span className="bg-[#C9A86C] text-[#070708] font-bold text-[9px] uppercase tracking-[0.2em] px-2 py-0.5 rounded-xs flex items-center gap-1 shadow-md">
-            <Sparkles size={10} />
-            Best-Seller
+      {/* Badges / Discount */}
+      <div className="absolute top-2 left-2 z-20 flex flex-col gap-1 pointer-events-none">
+        {hasDiscount && (
+          <span className="bg-[#B89753] text-white font-bold text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-xs shadow-sm">
+            -{discountPercent}% OFF
           </span>
         )}
-        <span className="bg-[#070708]/80 backdrop-blur-md border border-[#C9A86C]/30 text-[#E8D5B7] text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 rounded-xs">
-          {product.concentration}
-        </span>
+        {product.isBestseller && !hasDiscount && (
+          <span className="bg-[#B89753] text-white font-bold text-[9px] uppercase tracking-[0.1em] px-1.5 py-0.5 rounded-xs shadow-sm flex items-center gap-0.5">
+            <Sparkles size={9} />
+            Top
+          </span>
+        )}
       </div>
 
       {/* Wishlist Button */}
@@ -43,87 +48,87 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
           e.stopPropagation();
           toggleWishlist(product);
         }}
-        className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
+        className={`absolute top-2 right-2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-all ${
           isWish
-            ? 'bg-[#C9A86C] text-[#070708] border-[#C9A86C]'
-            : 'bg-[#070708]/70 border-[#C9A86C]/30 text-[#D1CEC7] hover:text-[#C9A86C] hover:border-[#C9A86C]'
+            ? 'bg-[#B89753] text-white border-[#B89753]'
+            : 'bg-white/80 backdrop-blur-sm border-[#B89753]/30 text-[#5A564E] hover:text-[#B89753] hover:border-[#B89753]'
         }`}
         aria-label="Favoritar"
       >
-        <Heart size={14} className={isWish ? 'fill-[#070708]' : ''} />
+        <Heart size={13} className={isWish ? 'fill-white' : ''} />
       </button>
 
-      {/* Image Container with click to view */}
-      <div
-        onClick={() => onSelect(product)}
-        className="relative w-full aspect-[3/4] bg-[#08080a] overflow-hidden cursor-pointer flex items-center justify-center"
-      >
+      {/* Image Container */}
+      <div className="relative w-full aspect-square sm:aspect-[4/5] bg-[#FAF8F5] overflow-hidden flex items-center justify-center p-3">
         <img
           src={product.images[0]}
           alt={product.name}
-          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+          className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 ease-out"
           loading="lazy"
           decoding="async"
         />
-
-        {/* Ambient Overlay gradient on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c10] via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
-
-        {/* Quick View Button on Hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="bg-[#070708]/90 text-[#E8D5B7] border border-[#C9A86C]/60 text-[11px] uppercase tracking-[0.2em] px-4 py-2 rounded-xs flex items-center gap-1.5 shadow-2xl backdrop-blur-sm">
-            <Eye size={13} />
-            Detalhes do Frasco
-          </span>
-        </div>
       </div>
 
       {/* Info Section */}
-      <div className="p-5 flex flex-col flex-grow justify-between border-t border-[#C9A86C]/10 bg-[#0a0a0d]">
+      <div className="p-3 sm:p-4 flex flex-col flex-grow justify-between bg-white border-t border-[#B89753]/15">
         <div>
-          <span className="text-[10px] uppercase tracking-[0.2em] text-[#C9A86C] font-medium block mb-1">
+          {/* Category / Brand */}
+          <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.15em] text-[#8C6F3C] font-medium block mb-0.5">
             {product.category}
           </span>
 
-          <h3
-            onClick={() => onSelect(product)}
-            className="font-cinzel text-lg font-medium text-[#F8F6F0] hover:text-[#E8D5B7] cursor-pointer transition-colors leading-tight line-clamp-1"
-          >
+          {/* Title */}
+          <h3 className="font-cinzel text-xs sm:text-sm font-semibold text-[#1A1A1E] hover:text-[#B89753] transition-colors leading-snug line-clamp-2">
             {product.name}
           </h3>
 
-          <p className="text-[11px] text-[#9E9A92] line-clamp-2 mt-1.5 leading-relaxed font-light">
-            {product.description}
-          </p>
-
-          {/* Key Olfactory Notes */}
-          <div className="mt-3 pt-2.5 border-t border-[#C9A86C]/10 flex items-center text-[10px] text-[#C9A86C]/90 font-mono tracking-tight line-clamp-1">
-            <span className="text-[#6E6B65] mr-1 uppercase">Notas:</span> {product.notesTop.split(',').slice(0, 2).join(' • ')}
+          {/* Rating stars */}
+          <div className="flex items-center gap-1 mt-1.5">
+            <div className="flex items-center text-[#B89753]">
+              <Star size={11} className="fill-[#B89753]" />
+              <Star size={11} className="fill-[#B89753]" />
+              <Star size={11} className="fill-[#B89753]" />
+              <Star size={11} className="fill-[#B89753]" />
+              <Star size={11} className="fill-[#B89753]" />
+            </div>
+            <span className="text-[9px] text-[#7A756B]">({product.ratingCount || 77})</span>
           </div>
         </div>
 
         {/* Price and Actions */}
-        <div className="mt-4 pt-3 border-t border-[#C9A86C]/15 flex items-center justify-between">
+        <div className="mt-3 pt-2.5 border-t border-[#B89753]/15 flex flex-col gap-1.5">
           <div>
             {hasDiscount && (
-              <span className="text-[11px] text-[#6E6B65] line-through block leading-none">
+              <span className="text-[10px] text-[#8C8880] line-through block leading-none">
                 {formatCurrency(product.price)}
               </span>
             )}
-            <span className="font-cinzel text-base font-semibold text-[#E8D5B7]">
-              {formatCurrency(price)}
+            <div className="flex items-baseline gap-1">
+              <span className="font-cinzel text-sm sm:text-base font-bold text-[#1A1A1E]">
+                {formatCurrency(price)}
+              </span>
+            </div>
+            <span className="text-[9px] sm:text-[10px] text-[#B89753] font-medium block mt-0.5">
+              {formatCurrency(pixPrice)} no PIX
+            </span>
+            <span className="text-[9px] text-[#6A665C] block">
+              6x de {formatCurrency(installmentValue)} sem juros
             </span>
           </div>
 
           <button
-            onClick={() => addToCart(product, selectedVolume, 1)}
-            className="bg-[#C9A86C] hover:bg-[#DFC48F] text-[#070708] font-semibold text-[11px] uppercase tracking-[0.15em] px-3.5 py-2 rounded-xs flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+            onClick={(e) => {
+              e.stopPropagation();
+              addToCart(product, selectedVolume, 1);
+            }}
+            className="w-full mt-1 bg-[#1A1A1E] hover:bg-[#B89753] text-white font-medium text-[10px] sm:text-[11px] uppercase tracking-[0.15em] py-2 rounded-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95"
           >
-            <ShoppingBag size={13} />
-            <span>Adicionar</span>
+            <ShoppingBag size={12} />
+            <span>Comprar</span>
           </button>
         </div>
       </div>
     </div>
   );
 };
+

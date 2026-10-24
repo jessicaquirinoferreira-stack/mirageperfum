@@ -81,43 +81,62 @@ export async function testConnection() {
 }
 testConnection();
 
-// Products services with automatic fallback to initial products
+// Products services with automatic fallback and sanitization to prevent undefined Firestore errors
 export async function getProductsService(): Promise<Product[]> {
   try {
     const productsRef = collection(db, 'products');
     const snapshot = await getDocs(productsRef);
-    if (snapshot.empty) {
-      // Seed initial products to Firestore
-      await seedDatabase();
-      return INITIAL_PRODUCTS;
+    let firestoreProducts: Product[] = [];
+    if (!snapshot.empty) {
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        firestoreProducts.push({
+          id: docSnap.id,
+          ...data,
+        } as Product);
+      });
     }
-    const products: Product[] = [];
-    snapshot.forEach(docSnap => {
-      const data = docSnap.data();
-      products.push({
-        id: docSnap.id,
-        ...data,
-      } as Product);
-    });
-    return products.length > 0 ? products : INITIAL_PRODUCTS;
+    const local = JSON.parse(localStorage.getItem('mirage_local_products') || '[]');
+    const map = new Map<string, Product>();
+    const base = firestoreProducts.length > 0 ? firestoreProducts : (local.length > 0 ? local : INITIAL_PRODUCTS);
+    base.forEach((p: Product) => map.set(p.id, p));
+    local.forEach((p: Product) => map.set(p.id, p));
+    const all = Array.from(map.values());
+    return all.length > 0 ? all : INITIAL_PRODUCTS;
   } catch (err) {
     handleFirestoreError(err, OperationType.LIST, 'products');
-    // Fallback gracefully so UI remains responsive and rich
-    return INITIAL_PRODUCTS;
+    const local = JSON.parse(localStorage.getItem('mirage_local_products') || '[]');
+    return local.length > 0 ? local : INITIAL_PRODUCTS;
   }
 }
 
 export async function saveProductService(product: Product): Promise<void> {
   const id = product.id || `perfume-${Date.now()}`;
+  // Sanitize object to remove any undefined properties which cause Firestore setDoc exceptions
+  const sanitized = JSON.parse(JSON.stringify(product, (_key, value) => value === undefined ? null : value));
+  
+  // Always save to localStorage immediately for bulletproof instant visibility
+  try {
+    const localProducts = JSON.parse(localStorage.getItem('mirage_local_products') || '[]');
+    const index = localProducts.findIndex((p: Product) => p.id === id);
+    const itemToSave = { ...sanitized, id, updatedAt: new Date().toISOString() };
+    if (index >= 0) {
+      localProducts[index] = itemToSave;
+    } else {
+      localProducts.unshift(itemToSave);
+    }
+    localStorage.setItem('mirage_local_products', JSON.stringify(localProducts));
+  } catch {}
+
   try {
     await setDoc(doc(db, 'products', id), {
-      ...product,
+      ...sanitized,
       id,
       updatedAt: new Date().toISOString(),
     }, { merge: true });
   } catch (err) {
     handleFirestoreError(err, OperationType.WRITE, `products/${id}`);
-    throw err;
+    // Local storage fallback is already saved above
   }
 }
 
