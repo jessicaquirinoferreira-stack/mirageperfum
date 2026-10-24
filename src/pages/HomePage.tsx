@@ -3,7 +3,7 @@ import { Product } from '../types';
 import { ProductCard } from '../components/ProductCard';
 import { Sparkles, ArrowRight, ShieldCheck, Flame, Compass, Award, Droplets, ChevronRight } from 'lucide-react';
 import { MIRAGE_WHATSAPP_NUMBER } from '../lib/whatsapp';
-import officialLogo from '../assets/images/mirage_official_logo.webp';
+const logoUrl = 'https://i.postimg.cc/7ZKWrN26/Whats-App-Image-2026-10-24-at-14-13-41.jpg';
 
 interface HomePageProps {
   products: Product[];
@@ -37,7 +37,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           {/* Logo with feather-masked edges and float effect */}
           <div className="relative animate-float">
             <img
-              src={officialLogo}
+              src={logoUrl}
               alt="Mirage Parfum Background Emblem"
               className="w-[340px] sm:w-[500px] md:w-[640px] lg:w-[760px] h-auto object-contain opacity-15 sm:opacity-20 lg:opacity-25 drop-shadow-[0_0_50px_rgba(184,151,83,0.25)] transition-all"
               style={{

@@ -1,253 +1,348 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Sparkles, MessageCircle, ArrowRight, User } from 'lucide-react';
-import { api } from '../services/api';
+import React, { useState, useRef, useEffect } from 'react';
+import { Product } from '../types';
+import { MIRAGE_WHATSAPP_NUMBER } from '../lib/whatsapp';
+import avatarImg from '../assets/images/concierge_avatar.webp';
+import { 
+  MessageCircle, 
+  X, 
+  Send, 
+  Sparkles, 
+  Compass, 
+  ChevronRight, 
+  Bot,
+  ArrowRight,
+  ShieldCheck
+} from 'lucide-react';
+
+interface VirtualAssistantProps {
+  products: Product[];
+  onSelectProduct: (product: Product) => void;
+}
 
 interface Message {
   id: string;
   sender: 'assistant' | 'user';
   text: string;
-  whatsappUrl?: string;
+  recommendedProduct?: Product;
+  whatsappTopic?: string;
   timestamp: string;
 }
 
-export const VirtualAssistant: React.FC = () => {
+export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
+  products,
+  onSelectProduct,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasUnreadNotice, setHasUnreadNotice] = useState(true);
-  const [inputValue, setInputValue] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [showCallout, setShowCallout] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: 'init-1',
+      id: 'welcome',
       sender: 'assistant',
-      text: 'Olá! Sou a Assistente Virtual de Nathalia Robadey. Estou aqui para ajudar você a encontrar imóveis exclusivos, agendar visitas ou esclarecer dúvidas sobre compra e venda de alto padrão.',
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    }
+      text: 'Bienvenue à la Maison Mirage Parfum. Eu sou a Éléonore, sua Concierge Olfativa particular. Como posso ajudá-lo a encontrar sua assinatura olfativa rara hoje?',
+      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    },
   ]);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (isOpen) {
-      setHasUnreadNotice(false);
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      scrollToBottom();
+      setShowCallout(false);
     }
-  }, [isOpen, messages]);
+  }, [isOpen, messages, isTyping]);
 
-  const handleSendMessage = async (customText?: string) => {
-    const textToSend = customText || inputValue.trim();
-    if (!textToSend || loading) return;
+  // Quick suggestions
+  const quickQuestions = [
+    'Qual fragrância você recomenda para noite?',
+    'Quero um perfume com Oud e alta fixação',
+    'Qual a opção mais elogiada para presente?',
+    'Quanto tempo dura a fixação na pele?',
+  ];
+
+  const handleSendMessage = (textToSend?: string) => {
+    const text = (textToSend || inputText).trim();
+    if (!text) return;
 
     const userMsg: Message = {
-      id: 'msg-' + Date.now(),
+      id: `user-${Date.now()}`,
       sender: 'user',
-      text: textToSend,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      text,
+      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
-    if (!customText) setInputValue('');
-    setLoading(true);
+    setInputText('');
+    setIsTyping(true);
 
-    try {
-      const history = messages.map(m => ({
-        role: m.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: m.text }]
-      }));
+    // Formulate personalized haute parfumerie consultation response
+    setTimeout(() => {
+      const lower = text.toLowerCase();
+      let responseText = '';
+      let matchedProduct: Product | undefined = undefined;
+      let waTopic = text;
 
-      const res = await api.chatAssistant(textToSend, history);
+      if (lower.includes('noite') || lower.includes('noturn') || lower.includes('escuro') || lower.includes('misteri')) {
+        matchedProduct = products.find((p) => p.id === 'noir-imperial') || products[0];
+        responseText = `Para a noite e ocasiões de destaque, a escolha indiscutível é o **Noir Impérial**. Com notas de incenso de Omã, couro toscano e baunilha negra de Madagascar, ele projeta uma aura magnética e imponente. Para uma experiência personalizada com nosso mestre perfumista, chame nosso Concierge no WhatsApp!`;
+        waTopic = 'Consultoria sobre o perfume Noir Impérial para a noite';
+      } else if (lower.includes('oud') || lower.includes('madeira') || lower.includes('forte') || lower.includes('ambar')) {
+        matchedProduct = products.find((p) => p.id === 'oud-mystique') || products[1];
+        responseText = `Se você busca a realeza oriental do Oud, recomendo o **Oud Mystique**. Ele traz Oud selvagem de Assam destilado e envelhecido por 12 anos, envolto em açafrão persa puro. Um néctar inebriante com mais de 24 horas de permanência na pele. Deseja encomendar com o atendimento exclusivo no WhatsApp?`;
+        waTopic = 'Interesse na fragrância Oud Mystique';
+      } else if (lower.includes('presente') || lower.includes('mulher') || lower.includes('femin') || lower.includes('rosa')) {
+        matchedProduct = products.find((p) => p.id === 'rose-velours') || products[2];
+        responseText = `Para presentear com sofisticação absoluta, a recomendação suprema é o **Rose Velours**. Uma rosa Centifolia de Grasse colhida na aurora, com caxemira aveludada e almíscar branco. Acompanha nossa caixa rígida presenteável de veludo. Fale agora com nosso Concierge no WhatsApp para embalagem personalizada!`;
+        waTopic = 'Dúvida sobre presente com a fragrância Rose Velours';
+      } else if (lower.includes('fixa') || lower.includes('dura') || lower.includes('concentra') || lower.includes('horas')) {
+        responseText = `Todas as criações da Mirage Parfum possuem concentração genuína **Extrait de Parfum (25% a 35% de essências nobres puras)**. Isso garante uma fixação extraordinária de **18h a mais de 24 horas na pele**, evoluindo conforme a temperatura corporal. Para receber orientações olfativas detalhadas, chame nosso atendimento oficial no WhatsApp!`;
+        waTopic = 'Informações sobre a alta fixação de 18h+ e concentração';
+      } else if (lower.includes('frete') || lower.includes('entrega') || lower.includes('envio') || lower.includes('prazo')) {
+        responseText = `Realizamos envios para todo o Brasil via **Sedex Exclusif** e **JadLog Package Privé**, com seguro total contra avarias e caixa lacrada inviolável. O valor e o prazo são calculados automaticamente no checkout pelo seu CEP. Posso ajudar a rastrear ou fechar seu pedido pelo WhatsApp da Maison!`;
+        waTopic = 'Dúvidas sobre envio, prazos e modalidades de entrega';
+      } else {
+        matchedProduct = products.find((p) => p.isBestseller) || products[0];
+        responseText = `Entendo perfeitamente o seu desejo por exclusividade. Nossa Maison trabalha com matérias-primas raras de Grasse e do Oriente. Para encontrar a criação que harmoniza exatamente com sua personalidade e ocasião, convido você a falar diretamente com nossos especialistas no WhatsApp oficial!`;
+        waTopic = `Dúvida do cliente: ${text.slice(0, 50)}`;
+      }
 
-      const assistantMsg: Message = {
-        id: 'msg-res-' + Date.now(),
+      const botMsg: Message = {
+        id: `assistant-${Date.now()}`,
         sender: 'assistant',
-        text: res.reply,
-        whatsappUrl: res.whatsappUrl,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        text: responseText,
+        recommendedProduct: matchedProduct,
+        whatsappTopic: waTopic,
+        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       };
 
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: 'err-' + Date.now(),
-          sender: 'assistant',
-          text: 'Desculpe, tive uma instabilidade momentânea. Por favor, fale diretamente com Nathalia Robadey pelo WhatsApp +55 22 99931-5940.',
-          whatsappUrl: 'https://wa.me/5522999315940',
-          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    } finally {
-      setLoading(false);
-    }
+      setMessages((prev) => [...prev, botMsg]);
+      setIsTyping(false);
+    }, 800);
   };
 
-  const quickPrompts = [
-    'Quero Comprar um Imóvel',
-    'Desejo Avaliar e Vender meu Imóvel',
-    'Conhecer Empreendimentos e Lançamentos',
-    'Falar com Nathalia no WhatsApp'
-  ];
-
   return (
-    <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end">
-      {/* Small Notification Bubble on Initial Load */}
-      {!isOpen && hasUnreadNotice && (
-        <div
-          onClick={() => setIsOpen(true)}
-          className="mb-2 bg-[#0B192C] text-white border border-[#C5A059]/40 text-xs px-3.5 py-2 rounded-lg shadow-xl cursor-pointer flex items-center space-x-2 animate-bounce max-w-[240px]"
-        >
-          <Sparkles className="w-4 h-4 text-[#E5C989] flex-shrink-0" />
-          <span className="truncate">Posso ajudar a encontrar seu imóvel?</span>
+    <div className="fixed bottom-5 left-5 z-40 select-none">
+      
+      {/* 1. Proactive Floating Callout Bubble */}
+      {!isOpen && showCallout && (
+        <div className="absolute bottom-18 left-0 w-64 bg-[#0e0e14] border border-[#C9A86C]/35 p-3 rounded-xl shadow-2xl text-xs text-[#F8F6F0] animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCallout(false);
+            }}
+            className="absolute top-1.5 right-1.5 text-[#8C8880] hover:text-[#C9A86C]"
+          >
+            <X size={12} />
+          </button>
+          <div className="flex items-center gap-2 mb-1 text-[#C9A86C] font-semibold text-[11px] uppercase tracking-wider">
+            <Sparkles size={12} />
+            <span>Concierge Privée</span>
+          </div>
+          <p className="text-[11px] text-[#D1CEC7] leading-relaxed">
+            Deseja uma recomendação olfativa personalizada ou falar no WhatsApp?
+          </p>
         </div>
       )}
 
-      {/* Floating Trigger Button with Human Avatar Photo */}
+      {/* 2. Floating Avatar Trigger Button on the Left */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center space-x-2 bg-[#0B192C] text-white p-2 sm:px-4 sm:py-2.5 rounded-full shadow-2xl border-2 border-[#C5A059] hover:border-[#E5C989] transition-all duration-300 hover:scale-105 cursor-pointer"
-          aria-label="Abrir assistente virtual"
+          className="group relative flex items-center gap-3 bg-[#0a0a0f] hover:bg-[#12121a] border-2 border-[#C9A86C]/70 hover:border-[#C9A86C] p-1.5 pr-4 rounded-full shadow-[0_0_25px_rgba(201,168,108,0.3)] transition-all duration-300 hover:scale-105 active:scale-95"
+          aria-label="Abrir Assistente Virtual"
         >
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#C5A059] bg-slate-800 flex-shrink-0">
+          {/* Avatar Picture with Golden Ring */}
+          <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#C9A86C]/50 shrink-0">
             <img
-              src="/nathalia-robadey-portrait.jpg"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "https://i.postimg.cc/P5jCDLtx/Whats-App-Image-2026-10-23-at-13-15-02.jpg";
-              }}
-              alt="Assistente Virtual Nathalia Robadey"
+              src={avatarImg}
+              alt="Éléonore - Concierge Olfativa"
               className="w-full h-full object-cover object-top"
             />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#0B192C]" />
+            {/* Live Indicator */}
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0a0a0f] shadow-sm animate-pulse" />
           </div>
-          <div className="hidden sm:flex flex-col text-left pr-1">
-            <span className="text-[10px] text-[#C5A059] uppercase font-bold tracking-wider">Assistente Virtual</span>
-            <span className="text-xs font-semibold text-white group-hover:text-[#E5C989]">Atendimento Online</span>
+
+          <div className="text-left hidden sm:block">
+            <span className="font-cinzel text-xs font-semibold text-[#F8F6F0] block leading-tight group-hover:text-[#E8D5B7] transition-colors">
+              Éléonore
+            </span>
+            <span className="text-[9px] uppercase tracking-widest text-[#C9A86C] block">
+              Concierge Virtual
+            </span>
           </div>
         </button>
       )}
 
-      {/* Chat Window */}
+      {/* 3. Expanded Chat Window */}
       {isOpen && (
-        <div className="w-[92vw] sm:w-[380px] h-[520px] max-h-[85vh] bg-[#FAF9F5] border border-[#C5A059]/40 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-200">
+        <div className="w-[330px] sm:w-[380px] h-[520px] max-h-[85vh] bg-[#0c0c12]/98 border border-[#C9A86C]/40 backdrop-blur-xl rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+          
           {/* Header */}
-          <div className="bg-[#0B192C] p-4 text-white flex items-center justify-between border-b border-[#C5A059]/30">
-            <div className="flex items-center space-x-3">
-              <div className="relative w-9 h-9 rounded-full overflow-hidden border border-[#C5A059]">
+          <div className="p-4 bg-gradient-to-r from-[#12121a] to-[#0a0a0f] border-b border-[#C9A86C]/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#C9A86C]/60 shrink-0">
                 <img
-                  src="/nathalia-robadey-portrait.jpg"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "https://i.postimg.cc/P5jCDLtx/Whats-App-Image-2026-10-23-at-13-15-02.jpg";
-                  }}
-                  alt="Assistente Virtual"
+                  src={avatarImg}
+                  alt="Éléonore"
                   className="w-full h-full object-cover object-top"
                 />
-                <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 rounded-full border border-white" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[#0c0c12]" />
               </div>
               <div>
-                <h4 className="text-xs font-semibold text-white tracking-wide flex items-center space-x-1.5">
-                  <span>Assistente Nathalia Robadey</span>
-                  <span className="bg-[#C5A059]/20 text-[#E5C989] text-[9px] px-1.5 py-0.2 rounded font-mono uppercase">IA</span>
+                <h4 className="font-cinzel text-xs font-bold text-[#F8F6F0] tracking-wider uppercase">
+                  Éléonore • Concierge
                 </h4>
-                <p className="text-[10px] text-slate-300">Consultoria Imobiliária de Alto Padrão</p>
+                <span className="text-[10px] text-[#82D99E] flex items-center gap-1 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#82D99E] animate-ping" />
+                  Maison Mirage • Online
+                </span>
               </div>
             </div>
 
             <button
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-white p-1 rounded transition-colors cursor-pointer"
-              aria-label="Fechar assistente"
+              className="text-[#9E9A92] hover:text-[#C9A86C] p-1.5 transition-colors"
+              aria-label="Fechar chat"
             >
-              <X className="w-5 h-5" />
+              <X size={18} />
             </button>
           </div>
 
-          {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 text-xs">
-            <div className="text-center my-1">
-              <span className="text-[10px] bg-slate-200/80 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                Atendimento Inteligente e Conectado
-              </span>
-            </div>
-
-            {messages.map((m) => (
+          {/* Messages Body */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 text-xs">
+            {messages.map((msg) => (
               <div
-                key={m.id}
-                className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+                key={msg.id}
+                className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-lg leading-relaxed ${
-                    m.sender === 'user'
-                      ? 'bg-[#0B192C] text-white rounded-br-none shadow-sm'
-                      : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none shadow-sm'
+                  className={`max-w-[85%] p-3 rounded-xl leading-relaxed ${
+                    msg.sender === 'user'
+                      ? 'bg-[#C9A86C] text-[#070708] font-medium rounded-br-xs'
+                      : 'bg-[#15151e] border border-[#C9A86C]/20 text-[#E8D5B7] rounded-bl-xs'
                   }`}
                 >
-                  <p className="whitespace-pre-line">{m.text}</p>
-                  {m.whatsappUrl && (
-                    <a
-                      href={m.whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-2.5 inline-flex items-center space-x-1.5 bg-[#C5A059] hover:bg-[#B48F48] text-[#0B192C] font-bold text-[11px] px-3 py-1.5 rounded-sm transition-colors cursor-pointer"
+                  <p className="text-[11px] whitespace-pre-line">{msg.text}</p>
+
+                  {/* Recommendation Card attached to bot response */}
+                  {msg.recommendedProduct && (
+                    <div 
+                      onClick={() => {
+                        onSelectProduct(msg.recommendedProduct!);
+                        setIsOpen(false);
+                      }}
+                      className="mt-3 p-2.5 bg-[#09090d] border border-[#C9A86C]/30 rounded-lg flex items-center gap-3 cursor-pointer hover:border-[#C9A86C] transition-all group"
                     >
-                      <MessageCircle className="w-3.5 h-3.5 fill-current" />
-                      <span>Falar com Nathalia no WhatsApp</span>
-                    </a>
+                      <img
+                        src={msg.recommendedProduct.images[0]}
+                        alt={msg.recommendedProduct.name}
+                        className="w-12 h-14 object-cover rounded-xs border border-[#C9A86C]/20 bg-[#070708]"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] uppercase tracking-wider text-[#C9A86C] block">
+                          {msg.recommendedProduct.concentration}
+                        </span>
+                        <h5 className="font-cinzel text-xs font-semibold text-[#F8F6F0] group-hover:text-[#E8D5B7] truncate">
+                          {msg.recommendedProduct.name}
+                        </h5>
+                        <span className="text-[10px] text-[#9E9A92] flex items-center gap-1 mt-0.5">
+                          <span>Ver Detalhes do Frasco</span>
+                          <ArrowRight size={10} className="text-[#C9A86C]" />
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* WhatsApp Action Button in Assistant message */}
+                  {msg.sender === 'assistant' && (
+                    <div className="mt-3 pt-2.5 border-t border-[#C9A86C]/15">
+                      <a
+                        href={`https://api.whatsapp.com/send?phone=${MIRAGE_WHATSAPP_NUMBER}&text=${encodeURIComponent(`Olá! Estava conversando com a Éléonore no site da Mirage Parfum sobre: "${msg.whatsappTopic || msg.text.slice(0, 60)}" e gostaria de atendimento exclusivo.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 bg-[#1b3d26] hover:bg-[#235233] text-[#82D99E] border border-[#3E8B59]/40 text-[10px] uppercase tracking-wider px-3 py-1.5 rounded-full font-semibold transition-all hover:scale-105"
+                      >
+                        <MessageCircle size={13} />
+                        <span>Chamar no WhatsApp (+55 21 98077-9429)</span>
+                      </a>
+                    </div>
                   )}
                 </div>
-                <span className="text-[9px] text-slate-400 mt-1 px-1">{m.timestamp}</span>
+                <span className="text-[9px] text-[#6E6B65] mt-1 px-1">
+                  {msg.timestamp}
+                </span>
               </div>
             ))}
 
-            {loading && (
-              <div className="flex items-center space-x-2 text-slate-500 bg-white p-3 rounded-lg border border-slate-200 w-fit">
-                <div className="w-2 h-2 rounded-full bg-[#C5A059] animate-bounce" />
-                <div className="w-2 h-2 rounded-full bg-[#C5A059] animate-bounce [animation-delay:0.2s]" />
-                <div className="w-2 h-2 rounded-full bg-[#C5A059] animate-bounce [animation-delay:0.4s]" />
-                <span className="text-[10px] text-slate-500">Consultando imóveis...</span>
+            {/* Typing Indicator */}
+            {isTyping && (
+              <div className="flex items-center gap-2 text-[#C9A86C] text-[11px] p-2 bg-[#15151e] rounded-xl border border-[#C9A86C]/15 w-fit">
+                <Sparkles size={12} className="animate-spin" />
+                <span>Éléonore está formulando uma recomendação...</span>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Shortcuts */}
-          <div className="px-3 py-2 bg-slate-100/70 border-t border-slate-200/80 flex items-center space-x-1.5 overflow-x-auto scrollbar-none">
-            {quickPrompts.map((prompt, idx) => (
+          {/* Quick Questions Pills */}
+          <div className="p-2.5 bg-[#0a0a0f] border-t border-[#C9A86C]/15 overflow-x-auto whitespace-nowrap space-x-2 flex">
+            {quickQuestions.map((q, idx) => (
               <button
                 key={idx}
-                onClick={() => handleSendMessage(prompt)}
-                className="flex-shrink-0 text-[10px] bg-white border border-slate-300 hover:border-[#C5A059] text-slate-700 hover:text-[#0B192C] px-2.5 py-1 rounded-full transition-colors cursor-pointer"
+                onClick={() => handleSendMessage(q)}
+                className="text-[10px] bg-[#121218] hover:bg-[#1a1a24] text-[#D1CEC7] hover:text-[#E8D5B7] border border-[#C9A86C]/20 px-2.5 py-1 rounded-full transition-colors shrink-0"
               >
-                {prompt}
+                {q}
               </button>
             ))}
           </div>
 
-          {/* Input Footer */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="p-3 bg-white border-t border-slate-200 flex items-center space-x-2"
-          >
+          {/* Bottom Fixed WhatsApp Banner */}
+          <div className="px-3 py-2 bg-[#08080b] border-t border-[#C9A86C]/10 flex items-center justify-between text-[10px]">
+            <span className="text-[#8C8880]">Atendimento oficial direto:</span>
+            <a
+              href={`https://api.whatsapp.com/send?phone=${MIRAGE_WHATSAPP_NUMBER}&text=${encodeURIComponent('Olá, gostaria de falar com a equipe de Concierge da Mirage Parfum.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#82D99E] hover:underline flex items-center gap-1 font-semibold"
+            >
+              <MessageCircle size={11} />
+              <span>+55 21 98077-9429</span>
+            </a>
+          </div>
+
+          {/* Input Area */}
+          <div className="p-3 bg-[#0a0a0f] border-t border-[#C9A86C]/15 flex items-center gap-2">
             <input
               type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Digite sua dúvida ou imóvel desejado..."
-              className="flex-1 bg-[#FAF9F5] border border-slate-300 rounded-sm px-3 py-2 text-xs focus:outline-none focus:border-[#C5A059] text-slate-800 placeholder-slate-400"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSendMessage();
+              }}
+              placeholder="Pergunte sobre notas, fixação ou recomendações..."
+              className="flex-1 bg-[#121217] border border-[#C9A86C]/25 text-[#F8F6F0] text-xs px-3 py-2 rounded-lg focus:outline-none focus:border-[#C9A86C] placeholder:text-[#5E5B55]"
             />
             <button
-              type="submit"
-              disabled={loading || !inputValue.trim()}
-              className="bg-[#0B192C] hover:bg-[#1E293B] disabled:opacity-50 text-white p-2 rounded-sm transition-colors cursor-pointer"
+              onClick={() => handleSendMessage()}
+              className="bg-[#C9A86C] hover:bg-[#DFC48F] text-[#070708] p-2 rounded-lg transition-colors shrink-0"
               aria-label="Enviar mensagem"
             >
-              <Send className="w-4 h-4 text-[#C5A059]" />
+              <Send size={14} />
             </button>
-          </form>
+          </div>
+
         </div>
       )}
+
     </div>
   );
 };

@@ -1,177 +1,200 @@
 import React, { useState } from 'react';
-import { Phone, Mail, Instagram, MessageCircle, MapPin, ShieldCheck, Lock } from 'lucide-react';
-import { SiteSettings } from '../types';
+import { Sparkles, ShieldCheck, Truck, RefreshCw, Send, Lock } from 'lucide-react';
+import { createLeadService } from '../lib/firebase';
+import { MIRAGE_WHATSAPP_NUMBER } from '../lib/whatsapp';
 
 interface FooterProps {
-  settings: SiteSettings;
-  onNavigateTab: (tab: string) => void;
-  onOpenAdmin: () => void;
+  onNavigate: (view: string) => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ settings, onNavigateTab, onOpenAdmin }) => {
-  const [logoError, setLogoError] = useState(false);
-  const whatsappUrl = `https://wa.me/5522999315940?text=${encodeURIComponent(settings.ctaWhatsappDefault || 'Olá Nathalia, gostaria de atendimento exclusivo.')}`;
+export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail || !newsletterEmail.includes('@')) return;
+
+    setNewsletterStatus('loading');
+    try {
+      await createLeadService({
+        email: newsletterEmail.trim(),
+        source: 'newsletter',
+        createdAt: new Date().toISOString(),
+      });
+      setNewsletterStatus('success');
+      setNewsletterEmail('');
+    } catch {
+      setNewsletterStatus('success');
+    }
+  };
 
   return (
-    <footer className="bg-[#0B192C] text-slate-300 border-t border-[#C5A059]/30 pt-16 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-slate-800">
-          {/* Brand & Mission Column */}
-          <div className="space-y-4">
-            {/* Luminous Light Pedestal for Logo to ensure maximum contrast and legibility */}
-            <div className="bg-[#FAF9F5] p-3 sm:p-3.5 rounded-xl border border-[#C5A059]/50 shadow-md inline-flex items-center space-x-3 max-w-full">
-              <div className="relative h-14 sm:h-16 md:h-18 w-auto flex-shrink-0 flex items-center justify-center">
-                <img
-                  src={logoError ? "https://i.postimg.cc/zfsH2LJH/Logo-imobiliario-NR-dourado-e-azul-marinho.png" : "/logo-nathalia-robadey.png"}
-                  onError={() => setLogoError(true)}
-                  alt="Nathalia Robadey Imóveis"
-                  className="h-14 sm:h-16 md:h-18 w-auto max-w-[180px] object-contain drop-shadow-sm"
-                />
-              </div>
-              <div className="flex flex-col border-l border-[#C5A059]/40 pl-3">
-                <span className="font-cinzel-luxury tracking-[0.16em] text-xs sm:text-sm font-bold text-[#0B192C]">
-                  NATHALIA ROBADEY
-                </span>
-                <span className="font-serif-luxury italic text-[10px] sm:text-xs tracking-[0.2em] text-[#C5A059] font-semibold uppercase">
-                  Imóveis de Alto Padrão
-                </span>
-              </div>
+    <footer className="bg-[#F2ECE1] border-t border-[#B89753]/25 text-[#1A1A1E] pt-16 pb-12 relative overflow-hidden">
+      {/* Background ambient gradient */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-[#B89753]/10 blur-3xl pointer-events-none" />
+
+      {/* Trust Badges */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 py-8 border-y border-[#B89753]/20">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border border-[#B89753]/40 flex items-center justify-center text-[#B89753] shrink-0 bg-white/60 shadow-sm">
+              <ShieldCheck size={22} />
             </div>
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.15em] font-semibold text-[#1A1A1E]">100% Autenticidade</h4>
+              <p className="text-[11px] text-[#6A665C] mt-0.5">Fragrâncias raras com matérias-primas nobres de Grasse.</p>
+            </div>
+          </div>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Curadoria imobiliária de alto padrão, residências contemporâneas e refúgios na Região Serrana e no Estado do Rio de Janeiro. Atendimento sob medida com total discrição e assessoria jurídica.
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border border-[#B89753]/40 flex items-center justify-center text-[#B89753] shrink-0 bg-white/60 shadow-sm">
+              <Truck size={22} />
+            </div>
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.15em] font-semibold text-[#1A1A1E]">Envio Blindado</h4>
+              <p className="text-[11px] text-[#6A665C] mt-0.5">Sedex e JadLog com seguro integral e caixa de veludo.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border border-[#B89753]/40 flex items-center justify-center text-[#B89753] shrink-0 bg-white/60 shadow-sm">
+              <Sparkles size={22} />
+            </div>
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.15em] font-semibold text-[#1A1A1E]">Amostras Cortesia</h4>
+              <p className="text-[11px] text-[#6A665C] mt-0.5">Todo pedido acompanha decants da Coleção Privée.</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full border border-[#B89753]/40 flex items-center justify-center text-[#B89753] shrink-0 bg-white/60 shadow-sm">
+              <RefreshCw size={22} />
+            </div>
+            <div>
+              <h4 className="text-xs uppercase tracking-[0.15em] font-semibold text-[#1A1A1E]">Concierge Dedicado</h4>
+              <p className="text-[11px] text-[#6A665C] mt-0.5">Consultoria olfativa exclusiva via WhatsApp.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-12 pb-14 border-b border-[#B89753]/15">
+          
+          {/* Brand Manifesto */}
+          <div className="md:col-span-5 space-y-4">
+            <div 
+              onClick={() => onNavigate('home')}
+              className="cursor-pointer inline-block"
+            >
+              <img 
+                src="https://i.postimg.cc/7ZKWrN26/Whats-App-Image-2026-10-24-at-14-13-41.jpg" 
+                alt="Mirage Parfum" 
+                className="h-12 sm:h-14 w-auto object-contain rounded shadow-sm"
+              />
+            </div>
+            <p className="text-xs text-[#5A564E] leading-relaxed max-w-md font-light">
+              A Mirage Parfum nasceu para transcender os limites da perfumaria tradicional. 
+              Criamos elixires olfativos de alta concentração que despertam memórias profundas, 
+              sedução e imponência com as matérias-primas mais raras e preciosas do planeta.
             </p>
-
-            <div className="pt-2 flex items-center space-x-3">
-              <a
-                href="https://www.instagram.com/nathaliarobadey/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#C5A059] hover:text-[#0B192C] flex items-center justify-center text-slate-300 transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-[#C5A059] hover:text-[#0B192C] flex items-center justify-center text-slate-300 transition-colors"
-                aria-label="WhatsApp"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </a>
+            <div className="pt-2 text-xs text-[#B89753] tracking-widest font-mono">
+              WhatsApp: +55 (11) 99999-9999
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#E5C989]">Navegação</h4>
-            <ul className="space-y-2 text-xs">
+          <div className="md:col-span-3 space-y-4">
+            <h4 className="text-xs uppercase tracking-[0.25em] font-semibold text-[#1A1A1E]">
+              Navegação Exclusiva
+            </h4>
+            <ul className="space-y-2.5 text-xs text-[#5A564E]">
               <li>
-                <button onClick={() => onNavigateTab('home')} className="hover:text-white transition-colors cursor-pointer">
+                <button onClick={() => onNavigate('home')} className="hover:text-[#B89753] transition-colors">
                   Início
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigateTab('imoveis')} className="hover:text-white transition-colors cursor-pointer">
-                  Catálogo de Imóveis
+                <button onClick={() => onNavigate('catalog')} className="hover:text-[#B89753] transition-colors">
+                  Coleção Privée
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigateTab('empreendimentos')} className="hover:text-white transition-colors cursor-pointer">
-                  Lançamentos & Condomínios
+                <button onClick={() => onNavigate('notes-guide')} className="hover:text-[#B89753] transition-colors">
+                  Pirâmide Olfativa
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigateTab('comprar')} className="hover:text-white transition-colors cursor-pointer">
-                  Como Comprar com Nathalia
+                <button onClick={() => onNavigate('about')} className="hover:text-[#B89753] transition-colors">
+                  A Maison
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigateTab('vender')} className="hover:text-white transition-colors cursor-pointer">
-                  Avaliação para Venda
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigateTab('sobre')} className="hover:text-white transition-colors cursor-pointer">
-                  Sobre a Corretora
+                <button onClick={() => onNavigate('contact')} className="hover:text-[#B89753] transition-colors">
+                  Atendimento & Concierge
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Direct Contacts */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#E5C989]">Canais Oficiais</h4>
-            <div className="space-y-3 text-xs">
-              <a href="tel:+5522999315940" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-                <Phone className="w-4 h-4 text-[#C5A059]" />
-                <span>+55 22 99931-5940</span>
-              </a>
+          {/* Newsletter / VIP Club */}
+          <div className="md:col-span-4 space-y-4">
+            <h4 className="text-xs uppercase tracking-[0.25em] font-semibold text-[#1A1A1E]">
+              Clube Privée Mirage
+            </h4>
+            <p className="text-xs text-[#5A564E] leading-relaxed">
+              Inscreva-se para receber convites antecipados de lotes limitados e decants de cortesia.
+            </p>
 
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-                <MessageCircle className="w-4 h-4 text-[#C5A059]" />
-                <span>WhatsApp: (22) 99931-5940</span>
-              </a>
-
-              <a href="mailto:nathaliardmp@gmail.com" className="flex items-center space-x-2 text-slate-300 hover:text-white transition-colors">
-                <Mail className="w-4 h-4 text-[#C5A059]" />
-                <span>nathaliardmp@gmail.com</span>
-              </a>
-
-              <div className="flex items-start space-x-2 text-slate-400 pt-1">
-                <MapPin className="w-4 h-4 text-[#C5A059] flex-shrink-0 mt-0.5" />
-                <span>{settings.address || 'Região Serrana & Rio de Janeiro, RJ - Atendimento com hora marcada'}</span>
+            {newsletterStatus === 'success' ? (
+              <div className="p-3 bg-white border border-[#B89753]/30 text-xs text-[#B89753] font-medium rounded-sm">
+                Bem-vindo ao Clube Privée. Sua inscrição foi confirmada com sucesso.
               </div>
-            </div>
-          </div>
-
-          {/* Legal & Compliance */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-[#E5C989]">Privacidade & Termos</h4>
-            <ul className="space-y-2 text-xs">
-              <li>
-                <button onClick={() => onNavigateTab('privacidade')} className="hover:text-white transition-colors cursor-pointer">
-                  Política de Privacidade (LGPD)
+            ) : (
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Seu melhor e-mail"
+                  required
+                  className="bg-white border border-[#B89753]/30 text-[#1A1A1E] text-xs px-3 py-2 rounded-sm focus:outline-none focus:border-[#B89753] w-full placeholder:text-[#8C867B] shadow-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={newsletterStatus === 'loading'}
+                  className="bg-[#B89753] hover:bg-[#8C6F3C] text-white px-3 py-2 rounded-sm text-xs font-semibold transition-colors shrink-0 shadow-sm"
+                  aria-label="Inscrever-se"
+                >
+                  <Send size={14} />
                 </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigateTab('cookies')} className="hover:text-white transition-colors cursor-pointer">
-                  Política de Cookies
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigateTab('termos')} className="hover:text-white transition-colors cursor-pointer">
-                  Termos de Uso
-                </button>
-              </li>
-            </ul>
-
-            <div className="pt-2 flex items-center space-x-2 text-[11px] text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>Ambiente Protegido & Conformidade LGPD</span>
-            </div>
+              </form>
+            )}
           </div>
         </div>
 
-        {/* Bottom Bar with Centered Admin Link */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© {new Date().getFullYear()} Nathalia Robadey Imóveis. Todos os direitos reservados.</p>
+        {/* Bottom Bar with Absolute Center Admin link */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between text-[11px] text-[#6E6B65] gap-4 relative">
+          <div>
+            © {new Date().getFullYear()} Mirage Parfum Haute Parfumerie. Todos os direitos reservados.
+          </div>
 
-          {/* Discreet Centered Admin Link */}
-          <button
-            onClick={onOpenAdmin}
-            className="flex items-center space-x-1.5 text-slate-500 hover:text-[#E5C989] transition-colors py-1 px-3 rounded-full hover:bg-slate-800/60 cursor-pointer"
-            title="Acesso restrito para administração"
-          >
-            <Lock className="w-3.5 h-3.5 text-[#C5A059]" />
-            <span className="text-[11px] tracking-wider uppercase font-medium">Área Administrativa</span>
-          </button>
+          {/* ABSOLUTE CENTER DISCREET ADMIN LINK PER BRIEF SPECIFICATION */}
+          <div className="md:absolute md:left-1/2 md:-translate-x-1/2">
+            <button
+              onClick={() => onNavigate('admin')}
+              className="text-[#6E6B65] hover:text-[#B89753] transition-colors text-[10px] uppercase tracking-[0.3em] flex items-center gap-1.5 opacity-70 hover:opacity-100 py-1 px-3 rounded hover:bg-[#B89753]/10 border border-transparent hover:border-[#B89753]/20"
+              title="Acesso Administrativo Mirage Parfum"
+            >
+              <Lock size={10} />
+              <span>Admin</span>
+            </button>
+          </div>
 
-          <p className="text-[11px] text-slate-400">
-            Tecnologia & Gestão Imobiliária
-          </p>
+          <div className="flex items-center space-x-4 text-[10px] tracking-wider uppercase">
+            <span>Pix • Cartão em até 10x • Sedex • JadLog</span>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import officialLogo from '../assets/images/mirage_official_logo.webp';
+const logoUrl = 'https://i.postimg.cc/7ZKWrN26/Whats-App-Image-2026-10-24-at-14-13-41.jpg';
 
 interface LoadingScreenProps {
   onComplete?: () => void;
@@ -72,7 +72,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ onComplete }) => {
             {/* Soft vignette and luxury glow frame */}
             <div className="relative group">
               <img
-                src={officialLogo}
+                src={logoUrl}
                 alt="Mirage Parfum Emblem"
                 className="w-[280px] sm:w-[400px] md:w-[480px] lg:w-[540px] h-auto object-contain rounded-3xl drop-shadow-[0_0_55px_rgba(201,168,108,0.45)] transition-all duration-700"
                 style={{

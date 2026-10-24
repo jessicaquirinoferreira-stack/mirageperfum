@@ -1,6 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'jessicaq2204@gmail.com' ||
+        request.auth.token.email == 'admin@x.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
 
     function isValidId(id) {
       return id is string && id.size() <= 128;
@@ -10,81 +26,39 @@ service cloud.firestore {
       return request.resource.data;
     }
 
-    function existing() {
-      return resource.data;
+    // Products collection: publicly viewable if active, manageable by admin
+    match /products/{productId} {
+      allow read: if isValidId(productId) && (resource.data.status == 'active' || isAdmin());
+      allow create, update, delete: if isAdmin();
     }
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'admin@x.com' ||
-        request.auth.token.email == 'jonasthugsantos@gmail.com' ||
-        request.auth.token.email == 'nathaliardmp@gmail.com' ||
-        request.auth.uid != null
-      );
-    }
-
-    // Default deny catch-all
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // Admin whitelist collection
-    match /admins/{adminId} {
-      allow read: if true;
-      allow write: if isAdmin() || (isSignedIn() && request.auth.token.email == 'admin@x.com') || (isValidId(adminId) && adminId == 'admin_x');
-    }
-
-    // Publicly accessible property listings
-    match /properties/{propertyId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidId(propertyId);
-    }
-
-    // Publicly accessible luxury development launches
-    match /developments/{developmentId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidId(developmentId);
-    }
-
-    // Publicly accessible promotional landing pages
-    match /landingPages/{pageId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidId(pageId);
-    }
-
-    // Social media marketing & editorial posts
-    match /socialPosts/{postId} {
-      allow read: if true;
-      allow create, update, delete: if isAdmin() && isValidId(postId);
-    }
-
-    // Audit logs
-    match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isValidId(logId);
-    }
-
-    // Inbound contact leads & scheduling requests
-    // Public clients can submit leads, but only broker admin can read (PII Isolation Pillar)
-    match /leads/{leadId} {
-      allow create: if isValidId(leadId) &&
-        incoming().name is string &&
-        incoming().name.size() >= 2 &&
-        incoming().name.size() <= 150 &&
-        incoming().phone is string &&
-        incoming().phone.size() >= 7 &&
-        incoming().phone.size() <= 40;
+    // Orders collection: any customer can create an order during checkout, only admin can read and update
+    match /orders/{orderId} {
       allow read, update, delete: if isAdmin();
+      allow create: if isValidId(orderId) && 
+        incoming().customerName is string && incoming().customerName.size() <= 150 &&
+        incoming().customerPhone is string && incoming().customerPhone.size() <= 40 &&
+        incoming().customerEmail is string && incoming().customerEmail.size() <= 150 &&
+        incoming().total is number;
     }
 
-    // Site institutional settings
-    match /siteSettings/{settingsId} {
-      allow read: if true;
-      allow write: if isAdmin() && isValidId(settingsId);
+    // Leads collection: visitors can submit leads (newsletter/checkout), only admin can read and manage
+    match /leads/{leadId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isValidId(leadId) &&
+        incoming().email is string && incoming().email.size() <= 150;
+    }
+
+    // Coupons collection: customers can read coupons to validate promo codes at checkout, only admin can manage
+    match /coupons/{couponId} {
+      allow read: if isValidId(couponId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Admins collection
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
   }
 }
