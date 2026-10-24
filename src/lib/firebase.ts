@@ -65,18 +65,19 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.warn('Firestore Operation Notification:', JSON.stringify(errInfo));
   return errInfo;
 }
 
-// Test connection on boot per specification
+// Test connection silently on boot
 export async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.warn('Firebase client is offline or database initializing.');
-    }
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('offline')), 2000));
+    await Promise.race([
+      getDocFromServer(doc(db, 'test', 'connection')),
+      timeoutPromise
+    ]);
+  } catch {
+    // Offline mode / sandbox fallback active
   }
 }
 testConnection();

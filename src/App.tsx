@@ -24,6 +24,7 @@ import { ContactPage } from './pages/ContactPage';
 import { WishlistPage } from './pages/WishlistPage';
 import { TermsPage } from './pages/TermsPage';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { LandingPageView } from './pages/LandingPageView';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<string>('home');
@@ -39,21 +40,39 @@ export default function App() {
       const data = await getProductsService();
       if (data && data.length > 0) {
         setProducts(data);
+        return data;
       }
     } catch (err) {
       console.warn('Using local catalog initial seed:', err);
     }
+    return products;
   };
 
   useEffect(() => {
     preloadAllSiteImages();
-    loadProducts();
+    loadProducts().then((loaded) => {
+      const currentProducts = loaded || products;
+      const hash = window.location.hash;
+      if (hash.startsWith('#lp-')) {
+        const lpId = hash.replace('#lp-', '');
+        const found = currentProducts.find((p: Product) => p.id === lpId);
+        if (found) {
+          setSelectedProduct(found);
+          setCurrentView('landing-page');
+        }
+      }
+    });
   }, []);
 
   const handleNavigate = (view: string, data?: any) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    if (view === 'product-detail' && data) {
-      setSelectedProduct(data);
+    if ((view === 'product-detail' || view === 'landing-page') && data) {
+      if (typeof data === 'string') {
+        const found = products.find(p => p.id === data);
+        if (found) setSelectedProduct(found);
+      } else {
+        setSelectedProduct(data);
+      }
     }
     setCurrentView(view);
   };
@@ -102,6 +121,14 @@ export default function App() {
             <CatalogPage
               products={products}
               onSelectProduct={handleSelectProduct}
+            />
+          )}
+
+          {currentView === 'landing-page' && selectedProduct && (
+            <LandingPageView
+              product={selectedProduct}
+              onNavigate={handleNavigate}
+              onProceedToCheckout={() => handleNavigate('checkout')}
             />
           )}
 
@@ -156,6 +183,7 @@ export default function App() {
             <AdminDashboard
               onNavigateHome={() => handleNavigate('home')}
               onRefreshProducts={loadProducts}
+              onNavigate={handleNavigate}
             />
           )}
         </main>

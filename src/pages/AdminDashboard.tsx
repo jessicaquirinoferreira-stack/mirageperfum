@@ -38,18 +38,22 @@ import {
   ArrowUpRight,
   Sparkles,
   TrendingUp,
-  DollarSign
+  DollarSign,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 interface AdminDashboardProps {
   onNavigateHome: () => void;
   onRefreshProducts: () => void;
+  onNavigate?: (view: string, data?: any) => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onNavigateHome,
   onRefreshProducts,
+  onNavigate,
 }) => {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -61,7 +65,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'leads' | 'coupons' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'leads' | 'coupons' | 'landing-pages' | 'settings'>('dashboard');
+  const [copiedLpHash, setCopiedLpHash] = useState<string | null>(null);
 
   // Data states
   const [products, setProducts] = useState<Product[]>([]);
@@ -527,6 +532,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           { id: 'orders', label: `Pedidos (${orders.length})`, icon: ShoppingBag },
           { id: 'leads', label: `Leads (${leads.length})`, icon: Users },
           { id: 'coupons', label: `Cupons (${coupons.length})`, icon: Tag },
+          { id: 'landing-pages', label: 'Criar Landing Page', icon: Sparkles },
           { id: 'settings', label: 'Configurações', icon: Settings },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -1016,6 +1022,81 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: LANDING PAGES GENERATOR */}
+      {activeTab === 'landing-pages' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-cinzel text-lg text-[#F8F6F0] uppercase tracking-wider">
+                Gerador de Landing Pages de Alta Conversão
+              </h3>
+              <span className="text-xs text-[#8C8880]">
+                Escolha qualquer fragrância para gerar uma Landing Page dedicada, com efeitos robustos e checkout integrado.
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((prod) => {
+              const lpLink = `${window.location.origin}/#lp-${prod.id}`;
+              const isCopied = copiedLpHash === prod.id;
+              return (
+                <div key={prod.id} className="bg-[#0b0b0f] border border-[#C9A86C]/25 rounded-xs p-5 space-y-4 shadow-xl flex flex-col justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-20 rounded-xs overflow-hidden border border-[#C9A86C]/30 bg-[#070708] shrink-0">
+                      <img src={prod.images[0]} alt={prod.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase tracking-wider text-[#C9A86C] font-semibold block">
+                        {prod.category}
+                      </span>
+                      <h4 className="font-cinzel text-sm text-[#F8F6F0] font-medium leading-tight">
+                        {prod.name}
+                      </h4>
+                      <span className="font-cinzel text-xs text-[#E8D5B7] block font-bold">
+                        {formatCurrency(prod.promotionalPrice || prod.price)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-[#121217] border border-[#C9A86C]/10 rounded-xs font-mono text-[10px] text-[#A39E93] truncate">
+                    {lpLink}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-[#C9A86C]/15">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(lpLink);
+                        setCopiedLpHash(prod.id);
+                        setTimeout(() => setCopiedLpHash(null), 3000);
+                      }}
+                      className="flex-1 bg-[#1A1A1E] hover:bg-[#25252d] text-[#E8D5B7] border border-[#C9A86C]/30 py-2.5 px-3 rounded-xs text-[11px] uppercase tracking-wider font-medium flex items-center justify-center gap-1.5 transition-all"
+                    >
+                      <Copy size={13} />
+                      <span>{isCopied ? 'Link Copiado!' : 'Copiar Link'}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (onNavigate) {
+                          onNavigate('landing-page', prod);
+                        } else {
+                          window.location.hash = `#lp-${prod.id}`;
+                          window.location.reload();
+                        }
+                      }}
+                      className="bg-[#C9A86C] hover:bg-[#DFC48F] text-[#070708] py-2.5 px-3 rounded-xs text-[11px] uppercase tracking-wider font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Visualizar</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

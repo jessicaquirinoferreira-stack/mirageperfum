@@ -61,13 +61,19 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, onOpenS
 
           <div 
             onClick={() => onNavigate('home')}
-            className="cursor-pointer flex items-center group select-none mr-auto ml-2 md:ml-0 md:mr-8 lg:mr-12 shrink-0"
+            className="cursor-pointer flex flex-col items-start text-left group select-none mr-auto ml-2 md:ml-0 md:mr-8 lg:mr-12 shrink-0"
           >
-            <img 
-              src="https://i.postimg.cc/7ZKWrN26/Whats-App-Image-2026-10-24-at-14-13-41.jpg" 
-              alt="Mirage Parfum" 
-              className="h-10 sm:h-12 w-auto object-contain rounded shadow-sm"
-            />
+            <div className="flex items-center gap-2">
+              <span className="font-cinzel text-xl sm:text-2xl lg:text-3xl font-semibold tracking-[0.28em] text-[#1A1A1E] group-hover:text-[#B89753] transition-colors uppercase">
+                Mirage
+              </span>
+              <span className="hidden md:inline-block font-cinzel text-xs text-[#B89753] tracking-[0.35em] font-normal uppercase mt-0.5">
+                Parfum
+              </span>
+            </div>
+            <span className="text-[9px] uppercase tracking-[0.35em] text-[#8C7650] mt-0.5 group-hover:text-[#B89753] transition-colors font-medium">
+              Haute Parfumerie
+            </span>
           </div>
 
           {/* Desktop Navigation */}
