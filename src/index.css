@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-bg-base: #070708;
+    --color-bg-surface: #0e0e12;
+    --color-gold: #C9A86C;
+    --color-gold-light: #E8D5B7;
+    --color-gold-dark: #8C6F3C;
+    --color-offwhite: #F8F6F0;
+  }
+
+  body {
+    background-color: #070708;
+    color: #F8F6F0;
+    font-family: 'Montserrat', sans-serif;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, .font-heading {
+    font-family: 'Cinzel', 'Playfair Display', serif;
+    letter-spacing: 0.05em;
+  }
+
+  .font-serif-luxury {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-cinzel {
+    font-family: 'Cinzel', serif;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #09090c;
+}
+::-webkit-scrollbar-thumb {
+  background: #2b261e;
+  border-radius: 9999px;
+  border: 1px solid rgba(201, 168, 108, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C9A86C;
+}
+
+/* Luxury Glassmorphism & Gold accents */
+.glass-luxury {
+  background: rgba(14, 14, 18, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201, 168, 108, 0.15);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(22, 22, 28, 0.8) 0%, rgba(12, 12, 16, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 108, 0.12);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  border-color: rgba(201, 168, 108, 0.4);
+  box-shadow: 0 12px 35px -10px rgba(201, 168, 108, 0.12);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #F8E7CD 0%, #C9A86C 50%, #9B783E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-bg {
+  background: linear-gradient(135deg, #E6D3B3 0%, #C9A86C 50%, #947238 100%);
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 25px rgba(201, 168, 108, 0.18);
+}
+
+.shimmer-gold {
+  background: linear-gradient(
+    90deg,
+    rgba(201, 168, 108, 0) 0%,
+    rgba(232, 213, 183, 0.3) 50%,
+    rgba(201, 168, 108, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float-slow 6s ease-in-out infinite;
+}
+
+/* Subtle gold dust particles background */
+.gold-noise-bg {
+  background-image: radial-gradient(circle at 50% 0%, rgba(201, 168, 108, 0.08) 0%, transparent 60%);
+}

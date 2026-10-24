@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Luxury perfume product catalog item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 150 },
+        "subtitle": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "category": { "type": "string", "maxLength": 60 },
+        "concentration": { "type": "string", "enum": ["Extrait de Parfum", "Eau de Parfum", "Eau de Toilette", "Elixir"], "maxLength": 30 },
+        "volume": { "type": "string", "maxLength": 30 },
+        "price": { "type": "number" },
+        "promotionalPrice": { "type": "number" },
+        "stock": { "type": "number" },
+        "notesTop": { "type": "string", "maxLength": 300 },
+        "notesHeart": { "type": "string", "maxLength": 300 },
+        "notesBase": { "type": "string", "maxLength": 300 },
+        "images": { "type": "array" },
+        "featured": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "draft", "archived"], "maxLength": 20 },
+        "createdAt": { "type": "string", "maxLength": 100 },
+        "updatedAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["name", "price", "category", "concentration", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer perfume purchase order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 150 },
+        "customerEmail": { "type": "string", "maxLength": 150 },
+        "customerPhone": { "type": "string", "maxLength": 40 },
+        "cep": { "type": "string", "maxLength": 20 },
+        "street": { "type": "string", "maxLength": 200 },
+        "number": { "type": "string", "maxLength": 50 },
+        "complement": { "type": "string", "maxLength": 100 },
+        "neighborhood": { "type": "string", "maxLength": 100 },
+        "city": { "type": "string", "maxLength": 100 },
+        "state": { "type": "string", "maxLength": 10 },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "shippingPrice": { "type": "number" },
+        "shippingType": { "type": "string", "maxLength": 50 },
+        "shippingDeadline": { "type": "string", "maxLength": 50 },
+        "discount": { "type": "number" },
+        "couponCode": { "type": "string", "maxLength": 50 },
+        "total": { "type": "number" },
+        "notes": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["novo", "em preparação", "enviado", "entregue", "cancelado"], "maxLength": 30 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["customerName", "customerPhone", "customerEmail", "cep", "street", "number", "city", "state", "total", "status"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "Captured lead from newsletter or checkout initiation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 },
+        "name": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "source": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["email", "source"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount coupon for checkout",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "code": { "type": "string", "maxLength": 30 },
+        "type": { "type": "string", "enum": ["percentage", "fixed"], "maxLength": 20 },
+        "value": { "type": "number" },
+        "minOrderValue": { "type": "number" },
+        "maxUses": { "type": "number" },
+        "usedCount": { "type": "number" },
+        "validUntil": { "type": "string", "maxLength": 50 },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["code", "type", "value", "isActive"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Collection of perfume catalog products"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders submitted from checkout"
+    },
+    "/leads/{leadId}": {
+      "schema": { "$ref": "#/entities/Lead" },
+      "description": "Marketing leads captured via newsletter or checkout"
+    },
+    "/coupons/{couponId}": {
+      "schema": { "$ref": "#/entities/Coupon" },
+      "description": "Store discount coupons"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Authorized administrator records"
+    }
+  }
+}
